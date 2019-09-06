@@ -5,6 +5,8 @@ from event_service_utils.schemas.internal_msgs import (
     BaseInternalMessage,
 )
 
+from forwarder.schemas import load_event_data, event_data_to_json
+
 
 class Forwarder(BaseService):
     def __init__(self,
@@ -21,6 +23,16 @@ class Forwarder(BaseService):
             logging_level=logging_level
         )
 
+    def get_destination_streams(self, destination):
+        return self.stream_factory.create(destination, stype='streamOnly')
+
+    def forward_to_subscriber(self, event_data):
+        sub_id = f'{event_data["publisher_id"]}-sub'  # this is totally wrong, this is just to have something
+        json_msg = event_data_to_json(event_data)
+        self.get_destination_streams(sub_id).write_events(json_msg)
+
+    # def get_event_output_for_subscriber(self, event_data):
+
     def process_data(self):
         self.logger.debug('Processing DATA..')
         if not self.service_stream:
@@ -28,8 +40,9 @@ class Forwarder(BaseService):
         event_list = self.service_stream.read_events(count=1)
         for event_tuple in event_list:
             event_id, json_msg = event_tuple
-            self.logger.debug(f'Processing new data: {json_msg}')
-            # do something with json_msg
+            event_data = load_event_data(json_msg)
+            self.logger.debug(f'Processing new data: {event_data}')
+            self.forward_to_subscriber(event_data)
 
     def process_action(self, action, event_data, json_msg):
         super(Forwarder, self).process_action(action, event_data, json_msg)

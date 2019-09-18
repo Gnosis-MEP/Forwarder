@@ -41,7 +41,6 @@ class TestForwarder(MockedServiceStreamTestCase):
     def test_process_action_should_call_process_action_addQuery(self, mocked_add_query):
         action = 'addQuery'
         query_data = {
-            'subscriber_id': 'sub-id',
             'query_id': '44d7985a',
             'publisher_id': '44d7985b',
         }
@@ -55,9 +54,7 @@ class TestForwarder(MockedServiceStreamTestCase):
         self.service.process_cmd()
         self.assertTrue(mocked_add_query.called)
         mocked_add_query.assert_called_once_with(
-            query_data['subscriber_id'],
             query_data['query_id'],
-            query_data['publisher_id'],
         )
 
     @patch('forwarder.service.Forwarder.del_query')
@@ -78,3 +75,13 @@ class TestForwarder(MockedServiceStreamTestCase):
         mocked_add_query.assert_called_once_with(
             query_data['query_id'],
         )
+
+    def test_forward_to_query_ids_stream_should_send_events_to_all_stream(self):
+        event_data = {
+            'query_ids': ['query-id1', 'query-id2']
+        }
+        self.stream_factory.mocked_dict['query-id1'] = []
+        self.stream_factory.mocked_dict['query-id2'] = []
+        self.service.forward_to_query_ids_stream(event_data)
+        self.assertEqual(len(self.stream_factory.mocked_dict['query-id1']), 1)
+        self.assertEqual(len(self.stream_factory.mocked_dict['query-id2']), 1)

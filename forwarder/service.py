@@ -22,22 +22,26 @@ class Forwarder(BaseService):
             stream_factory=stream_factory,
             logging_level=logging_level
         )
+        self.query_ids = {}
 
     def get_destination_streams(self, destination):
         return self.stream_factory.create(destination, stype='streamOnly')
 
-    def forward_to_subscriber(self, event_data):
-        sub_id = f'{event_data["publisher_id"]}-sub'  # this is totally wrong, this is just to have something
+    def forward_to_query_ids_stream(self, event_data):
         json_msg = event_data_to_json(event_data)
-        self.get_destination_streams(sub_id).write_events(json_msg)
+        query_ids = event_data.get('query_ids', [])
+        self.logger.debug('Sending {event_data} to {query_ids} streams')
+        for query_id in query_ids:
+            self.get_destination_streams(query_id).write_events(json_msg)
 
-    # def get_event_output_for_subscriber(self, event_data):
+    def forward_to_final_stream(self, event_data):
+        self.forward_to_query_ids_stream(event_data)
 
-    def add_query(self, subscriber_id, query_id, publisher_id):
-        pass
+    def add_query(self, query_id):
+        self.query_ids.add(query_id)
 
     def del_query(self, query_id):
-        pass
+        self.query_ids.remove(query_id)
 
     def process_data(self):
         self.logger.debug('Processing DATA..')
@@ -48,22 +52,20 @@ class Forwarder(BaseService):
             event_id, json_msg = event_tuple
             event_data = load_event_data(json_msg)
             self.logger.debug(f'Processing new data: {event_data}')
-            self.forward_to_subscriber(event_data)
+            self.forward_to_final_stream(event_data)
 
     def process_action(self, action, event_data, json_msg):
         super(Forwarder, self).process_action(action, event_data, json_msg)
         if action == 'addQuery':
-            subscriber_id = event_data['subscriber_id']
             query_id = event_data['query_id']
-            publisher_id = event_data['publisher_id']
-            self.add_query(subscriber_id, query_id, publisher_id)
+            self.add_query(query_id)
         elif action == 'delQuery':
             query_id = event_data['query_id']
             self.del_query(query_id)
 
     def log_state(self):
         super(Forwarder, self).log_state()
-        self.logger.info(f'My service name is: {self.name}')
+        self._log_dict('Queries', self.query_ids)
 
     def run(self):
         super(Forwarder, self).run()

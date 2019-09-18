@@ -33,6 +33,12 @@ class Forwarder(BaseService):
 
     # def get_event_output_for_subscriber(self, event_data):
 
+    def add_query(self, subscriber_id, query_id, publisher_id):
+        pass
+
+    def del_query(self, query_id):
+        pass
+
     def process_data(self):
         self.logger.debug('Processing DATA..')
         if not self.service_stream:
@@ -46,12 +52,14 @@ class Forwarder(BaseService):
 
     def process_action(self, action, event_data, json_msg):
         super(Forwarder, self).process_action(action, event_data, json_msg)
-        if action == 'someAction':
-            # do some action
-            pass
-        elif action == 'otherAction':
-            # do some other action
-            pass
+        if action == 'addQuery':
+            subscriber_id = event_data['subscriber_id']
+            query_id = event_data['query_id']
+            publisher_id = event_data['publisher_id']
+            self.add_query(subscriber_id, query_id, publisher_id)
+        elif action == 'delQuery':
+            query_id = event_data['query_id']
+            self.del_query(query_id)
 
     def log_state(self):
         super(Forwarder, self).log_state()

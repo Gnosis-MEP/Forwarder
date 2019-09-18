@@ -36,3 +36,45 @@ class TestForwarder(MockedServiceStreamTestCase):
         self.service.process_cmd()
         self.assertTrue(mocked_process_action.called)
         self.service.process_action.assert_called_once_with(action, event_data, msg_tuple[1])
+
+    @patch('forwarder.service.Forwarder.add_query')
+    def test_process_action_should_call_process_action_addQuery(self, mocked_add_query):
+        action = 'addQuery'
+        query_data = {
+            'subscriber_id': 'sub-id',
+            'query_id': '44d7985a',
+            'publisher_id': '44d7985b',
+        }
+        event_data = query_data.copy()
+        event_data.update({
+            'action': action,
+        })
+        msg_tuple = prepare_event_msg_tuple(event_data)
+
+        self.service.service_cmd.mocked_values = [msg_tuple]
+        self.service.process_cmd()
+        self.assertTrue(mocked_add_query.called)
+        mocked_add_query.assert_called_once_with(
+            query_data['subscriber_id'],
+            query_data['query_id'],
+            query_data['publisher_id'],
+        )
+
+    @patch('forwarder.service.Forwarder.del_query')
+    def test_process_action_should_call_process_action_delQuery(self, mocked_add_query):
+        action = 'delQuery'
+        query_data = {
+            'query_id': '44d7985a',
+        }
+        event_data = query_data.copy()
+        event_data.update({
+            'action': action,
+        })
+        msg_tuple = prepare_event_msg_tuple(event_data)
+
+        self.service.service_cmd.mocked_values = [msg_tuple]
+        self.service.process_cmd()
+        self.assertTrue(mocked_add_query.called)
+        mocked_add_query.assert_called_once_with(
+            query_data['query_id'],
+        )

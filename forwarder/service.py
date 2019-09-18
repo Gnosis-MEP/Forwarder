@@ -22,7 +22,7 @@ class Forwarder(BaseService):
             stream_factory=stream_factory,
             logging_level=logging_level
         )
-        self.query_ids = {}
+        self.query_id_to_subscriber_id_map = {}
 
     def get_destination_streams(self, destination):
         return self.stream_factory.create(destination, stype='streamOnly')
@@ -37,11 +37,11 @@ class Forwarder(BaseService):
     def forward_to_final_stream(self, event_data):
         self.forward_to_query_ids_stream(event_data)
 
-    def add_query(self, query_id):
-        self.query_ids.add(query_id)
+    def add_query(self, subscriber_id, query_id):
+        self.query_id_to_subscriber_id_map[query_id] = subscriber_id
 
     def del_query(self, query_id):
-        self.query_ids.remove(query_id)
+        self.query_id_to_subscriber_id_map.pop(query_id, None)
 
     def process_data(self):
         self.logger.debug('Processing DATA..')
@@ -57,15 +57,16 @@ class Forwarder(BaseService):
     def process_action(self, action, event_data, json_msg):
         super(Forwarder, self).process_action(action, event_data, json_msg)
         if action == 'addQuery':
+            subscriber_id = event_data['subscriber_id']
             query_id = event_data['query_id']
-            self.add_query(query_id)
+            self.add_query(subscriber_id, query_id)
         elif action == 'delQuery':
             query_id = event_data['query_id']
             self.del_query(query_id)
 
     def log_state(self):
         super(Forwarder, self).log_state()
-        self._log_dict('Queries', self.query_ids)
+        self._log_dict('Query to Subscriber ids', self.query_id_to_subscriber_id_map)
 
     def run(self):
         super(Forwarder, self).run()

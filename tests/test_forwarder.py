@@ -41,8 +41,8 @@ class TestForwarder(MockedServiceStreamTestCase):
     def test_process_action_should_call_process_action_addQuery(self, mocked_add_query):
         action = 'addQuery'
         query_data = {
-            'query_id': '44d7985a',
-            'publisher_id': '44d7985b',
+            'query_id': 'query_id',
+            'subscriber_id': 'subscriber_id',
         }
         event_data = query_data.copy()
         event_data.update({
@@ -54,6 +54,7 @@ class TestForwarder(MockedServiceStreamTestCase):
         self.service.process_cmd()
         self.assertTrue(mocked_add_query.called)
         mocked_add_query.assert_called_once_with(
+            query_data['subscriber_id'],
             query_data['query_id'],
         )
 

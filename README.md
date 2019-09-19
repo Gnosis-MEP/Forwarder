@@ -1,6 +1,40 @@
 # Forwarder
 Service responsible for sending the notification of matched events to the subscribers in the correct output format, as detailed by the inputs from the Query Register.
 
+# Commands Stream
+## Inputs
+
+### addQuery
+```json
+{
+    "action": "addQuery",
+    "query_id": "44d7985a-e41e-4d02-a772-a8f7c1c69124",
+    "subscriber_id": "44d7985a-e41e-4d02-a772-a8f7c1c69124"
+}
+```
+
+### delQuery
+```json
+{
+    "action": "delQuery",
+    "query_id": "44d7985a-e41e-4d02-a772-a8f7c1c69124"
+}
+```
+## Outputs
+None
+
+# Data Stream
+## inputs
+
+It expects a data event with at least the following information:
+```json
+{
+    "query_ids": ["query-id-1", "query-id-2"]
+}
+```
+
+The events are then sent to all of their query-ids streams, right now this is not applying any transformation in the output.
+
 
 # Installation
 

@@ -84,6 +84,7 @@ class TestForwarder(MockedServiceStreamTestCase):
 
     def test_forward_to_query_ids_stream_should_send_events_to_all_stream(self):
         event_data = {
+            'id': '1',
             'query_ids': ['query-id1', 'query-id2']
         }
         self.stream_factory.mocked_dict['query-id1'] = []

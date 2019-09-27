@@ -1,9 +1,7 @@
 #!/usr/bin/env python
+import uuid
+import json
 from event_service_utils.streams.redis import RedisStreamFactory
-from event_service_utils.schemas.internal_msgs import (
-    BaseInternalMessage,
-)
-
 
 from forwarder.conf import (
     REDIS_ADDRESS,
@@ -18,12 +16,12 @@ def make_dict_key_bites(d):
 
 
 def new_action_msg(action, event_data):
-    schema = BaseInternalMessage(action=action)
-    schema.dict.update(event_data)
-    return schema.json_msg_load_from_dict()
+    event_data['action'] = action
+    event_data.update({'id': str(uuid.uuid4())})
+    return {'event': json.dumps(event_data)}
 
 
-def send_msgs(service_stream):
+def send_action_msgs(service_cmd):
     msg_1 = new_action_msg(
         'someAction',
         {
@@ -39,17 +37,32 @@ def send_msgs(service_stream):
         }
     )
 
-    import ipdb; ipdb.set_trace()
     print(f'Sending msg {msg_1}')
-    service_stream.write_events(msg_1)
+    service_cmd.write_events(msg_1)
     print(f'Sending msg {msg_2}')
-    service_stream.write_events(msg_2)
+    service_cmd.write_events(msg_2)
+
+
+def send_data_msg(service_stream):
+    data_msg = {
+        'event': json.dumps(
+            {
+                'id': str(uuid.uuid4()),
+                'some': 'data'
+            }
+        )
+    }
+    print(f'Sending msg {data_msg}')
+    service_stream.write_events(data_msg)
 
 
 def main():
     stream_factory = RedisStreamFactory(host=REDIS_ADDRESS, port=REDIS_PORT)
+    service_cmd = stream_factory.create(SERVICE_CMD_KEY, stype='streamOnly')
     service_stream = stream_factory.create(SERVICE_STREAM_KEY, stype='streamOnly')
-    send_msgs(service_stream)
+    import ipdb; ipdb.set_trace()
+    send_action_msgs(service_cmd)
+    send_data_msg(service_stream)
 
 
 if __name__ == '__main__':

@@ -1,38 +1,38 @@
 import threading
 
-from event_service_utils.services.base import BaseService
-from event_service_utils.schemas.internal_msgs import (
-    BaseInternalMessage,
-)
-
-from forwarder.schemas import load_event_data, event_data_to_json
+from event_service_utils.logging.decorators import timer_logger
+from event_service_utils.services.tracer import BaseTracerService
+from event_service_utils.tracing.jaeger import init_tracer
 
 
-class Forwarder(BaseService):
+class Forwarder(BaseTracerService):
     def __init__(self,
                  service_stream_key, service_cmd_key,
                  stream_factory,
-                 logging_level):
-
+                 logging_level,
+                 tracer_configs):
+        tracer = init_tracer(self.__class__.__name__, **tracer_configs)
         super(Forwarder, self).__init__(
             name=self.__class__.__name__,
             service_stream_key=service_stream_key,
             service_cmd_key=service_cmd_key,
-            cmd_event_schema=BaseInternalMessage,
             stream_factory=stream_factory,
-            logging_level=logging_level
+            logging_level=logging_level,
+            tracer=tracer,
         )
+        self.cmd_validation_fields = ['id', 'action']
+        self.data_validation_fields = ['id']
+
         self.query_id_to_subscriber_id_map = {}
 
     def get_destination_streams(self, destination):
         return self.stream_factory.create(destination, stype='streamOnly')
 
     def forward_to_query_ids_stream(self, event_data):
-        json_msg = event_data_to_json(event_data)
         query_ids = event_data.get('query_ids', [])
         self.logger.debug('Sending {event_data} to {query_ids} streams')
         for query_id in query_ids:
-            self.get_destination_streams(query_id).write_events(json_msg)
+            self.write_event_with_trace(event_data, self.get_destination_streams(query_id))
 
     def forward_to_final_stream(self, event_data):
         self.forward_to_query_ids_stream(event_data)
@@ -43,19 +43,19 @@ class Forwarder(BaseService):
     def del_query(self, query_id):
         self.query_id_to_subscriber_id_map.pop(query_id, None)
 
-    def process_data(self):
-        self.logger.debug('Processing DATA..')
-        if not self.service_stream:
-            return
-        event_list = self.service_stream.read_events(count=1)
-        for event_tuple in event_list:
-            event_id, json_msg = event_tuple
-            event_data = load_event_data(json_msg)
-            self.logger.debug(f'Processing new data: {event_data}')
-            self.forward_to_final_stream(event_data)
+    # def send_event_to_somewhere(self, event_data):
+    #     self.logger.debug(f'Sending event to somewhere: {event_data}')
+    #     self.write_event_with_trace(event_data, self.somewhere_stream)
+
+    @timer_logger
+    def process_data_event(self, event_data, json_msg):
+        if not super(Forwarder, self).process_data_event(event_data, json_msg):
+            return False
+        self.forward_to_final_stream(event_data)
 
     def process_action(self, action, event_data, json_msg):
-        super(Forwarder, self).process_action(action, event_data, json_msg)
+        if not super(Forwarder, self).process_action(action, event_data, json_msg):
+            return False
         if action == 'addQuery':
             subscriber_id = event_data['subscriber_id']
             query_id = event_data['query_id']

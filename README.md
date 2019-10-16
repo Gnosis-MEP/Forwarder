@@ -3,16 +3,38 @@ Service responsible for sending the notification of matched events to the subscr
 
 # Commands Stream
 ## Inputs
-...
+### addQuery
+```json
+{
+    "id": "123-abc-123-abc-123-abc-123-abc-123-abc-123-abc",
+    "action": "addQuery",
+    "query_id": "44d7985a-e41e-4d02-a772-a8f7c1c69124",
+    "subscriber_id": "44d7985a-e41e-4d02-a772-a8f7c1c69124"
+}
+```
+
+### delQuery
+```json
+{
+    "id": "123-abc-123-abc-123-abc-123-abc-123-abc-123-abc",
+    "action": "delQuery",
+    "query_id": "44d7985a-e41e-4d02-a772-a8f7c1c69124",
+}
+```
 
 ## Outputs
 ...
 # Data Stream
 ## inputs
-...
+It expects events with at least this fields:
+```
+    "id": "123-abc-123-abc-123-abc-123-abc-123-abc-123-abc",
+    "query_ids":  ['query-id1', 'query-id2']
+
+```
 
 ## Outputs
-...
+Same as came in.
 
 # Installation
 

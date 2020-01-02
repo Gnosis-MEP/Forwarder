@@ -1,8 +1,8 @@
 import threading
-
 from event_service_utils.logging.decorators import timer_logger
 from event_service_utils.services.tracer import BaseTracerService
 from event_service_utils.tracing.jaeger import init_tracer
+import forwarder.image_util as img_util
 
 
 class Forwarder(BaseTracerService):
@@ -10,7 +10,7 @@ class Forwarder(BaseTracerService):
                  service_stream_key, service_cmd_key,
                  stream_factory,
                  logging_level,
-                 tracer_configs):
+                 tracer_configs, file_storage_cli):
         tracer = init_tracer(self.__class__.__name__, **tracer_configs)
         super(Forwarder, self).__init__(
             name=self.__class__.__name__,
@@ -20,6 +20,7 @@ class Forwarder(BaseTracerService):
             logging_level=logging_level,
             tracer=tracer,
         )
+        self.fs_client = file_storage_cli
         self.cmd_validation_fields = ['id', 'action']
         self.data_validation_fields = ['id']
 
@@ -51,6 +52,18 @@ class Forwarder(BaseTracerService):
     def process_data_event(self, event_data, json_msg):
         if not super(Forwarder, self).process_data_event(event_data, json_msg):
             return False
+        image_ndarray = img_util.get_event_data_image_ndarray(event_data, self.fs_client)
+
+        label = []
+        bbox = []
+        xmin, ymin = 0, 0
+        for key, nodes in event_data['vekg'].items():
+            for node in nodes:
+                label.append(node[1]['label'])
+                bbox.append(node[1]['bounding_box'])
+
+        image_ndarray = img_util.draw_bboxes(img = image_ndarray, bbox = bbox, labels = label, offset = (xmin, ymin))
+        event_data['output_image'] = img_util.get_image_in_base64(image_ndarray)
         self.forward_to_final_stream(event_data)
 
     def process_action(self, action, event_data, json_msg):

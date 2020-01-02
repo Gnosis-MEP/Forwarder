@@ -17,6 +17,9 @@ flake8 = "*"
 walrus = "==0.7.1"
 python-decouple = "==3.1"
 event-service-utils = "==1.1.1"
+opencv-python = "==4.0.0.21"
+pillow = "==5.4.1"
+numpy = "==1.16.4"
 forwarder = {path = ".",editable = true}
 
 [requires]

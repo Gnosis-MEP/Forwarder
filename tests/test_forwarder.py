@@ -17,6 +17,7 @@ class TestForwarder(MockedServiceStreamTestCase):
         'service_cmd_key': SERVICE_CMD_KEY,
         'logging_level': 'ERROR',
         'tracer_configs': {'reporting_host': None, 'reporting_port': None},
+        'file_storage_cli' : {},
     }
     SERVICE_CLS = Forwarder
     MOCKED_STREAMS_DICT = {

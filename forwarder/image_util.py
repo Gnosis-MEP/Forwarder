@@ -60,8 +60,8 @@ def get_image_in_base64(image_ndarray):
 
 def get_graph_image(G):
     node_labels = nx.get_node_attributes(G, 'label')
-    matched_nodes = [x for x, y in G.nodes(data=True) if y['is_matched'] == True]
-    fig = plt.figure(figsize=(6.4, 4.8))
+    matched_nodes = [node_id for node_id, node_attr in G.nodes(data=True) if node_attr['is_matched'] == True]
+    fig = plt.figure(figsize=(6.4, 4.8)) # default DPI is 100
     canvas = FigureCanvasAgg(fig)
     nx.draw_networkx(G, node_size=1500, nodelist=matched_nodes, labels=node_labels, node_color='yellow', font_color='black', font_size=18)
     fig.canvas.draw()

@@ -3,6 +3,7 @@ from event_service_utils.logging.decorators import timer_logger
 from event_service_utils.services.tracer import BaseTracerService
 from event_service_utils.tracing.jaeger import init_tracer
 import forwarder.image_util as img_util
+from event_service_utils.vekg_helper import load_graph_from_tuples_dict
 
 
 class Forwarder(BaseTracerService):
@@ -52,18 +53,13 @@ class Forwarder(BaseTracerService):
     def process_data_event(self, event_data, json_msg):
         if not super(Forwarder, self).process_data_event(event_data, json_msg):
             return False
+
         image_ndarray = img_util.get_event_data_image_ndarray(event_data, self.fs_client)
+        vekg_graph = load_graph_from_tuples_dict(event_data['vekg'])
+        output_image_ndarray, graph_image_ndarray = img_util.draw_bboxes_and_graph(source_image = image_ndarray, G = vekg_graph, offset = (0, 0))
+        event_data['output_image'] = img_util.get_image_in_base64(output_image_ndarray)
+        event_data['output_graph'] = img_util.get_image_in_base64(graph_image_ndarray)
 
-        label = []
-        bbox = []
-        xmin, ymin = 0, 0
-        for key, nodes in event_data['vekg'].items():
-            for node in nodes:
-                label.append(node[1]['label'])
-                bbox.append(node[1]['bounding_box'])
-
-        image_ndarray = img_util.draw_bboxes(img = image_ndarray, bbox = bbox, labels = label, offset = (xmin, ymin))
-        event_data['output_image'] = img_util.get_image_in_base64(image_ndarray)
         self.forward_to_final_stream(event_data)
 
     def process_action(self, action, event_data, json_msg):

@@ -1,6 +1,10 @@
 import base64
-
+import matplotlib.pyplot as plt
 import cv2
+import numpy as np
+import networkx as nx
+from matplotlib.backends.backend_agg import FigureCanvasAgg
+
 
 COLORS_10 =[(144,238,144),(178, 34, 34),(221,160,221),(  0,255,  0),(  0,128,  0),(210,105, 30),(220, 20, 60),
             (192,192,192),(255,228,196),( 50,205, 50),(139,  0,139),(100,149,237),(138, 43,226),(238,130,238),
@@ -27,26 +31,46 @@ def get_event_data_image_ndarray(event_data, fs_client):
     return image_nd_array
 
 
-def draw_bboxes(img, bbox, labels, offset):
-    for i, box in enumerate(bbox):
-        x1, y1, x2, y2 = [int(i) for i in box]
-        x1 += offset[0]
-        x2 += offset[0]
-        y1 += offset[1]
-        y2 += offset[1]
-        label = labels[i]
-        # box text and bar
-        color = COLORS_10[1 % len(COLORS_10)]
-        t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 2, 2)[0]
-        cv2.rectangle(img, (x1, y1), (x2, y2), color, 2)
-        centre_point = (int((x1 + x2) / 2), int((y1 + y2) / 2))
-        cv2.circle(img, centre_point, 2, color, 3)
-        cv2.putText(img, label, (x1, y1 + t_size[1] + 4), cv2.FONT_HERSHEY_PLAIN, 1, [255, 255, 255], 2)
+def draw_bboxes_and_graph(source_image, G, offset):
+    for node in G.nodes():
+        if G.node[node]['is_matched'] is True:
+            x1, y1, x2, y2 = G.node[node]['bounding_box']
+            x1 += offset[0]
+            x2 += offset[0]
+            y1 += offset[1]
+            y2 += offset[1]
+            label = G.node[node]['label']
 
-    return img
+            # draw text and bounding box
+            color = COLORS_10[1 % len(COLORS_10)]
+            t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 2, 2)[0]
+            cv2.rectangle(source_image, (x1, y1), (x2, y2), color, 2)
+            centre_point = (int((x1 + x2) / 2), int((y1 + y2) / 2))
+            cv2.circle(source_image, centre_point, 2, color, 3)
+            cv2.putText(source_image, label, (x1, y1 + t_size[1] + 4), cv2.FONT_HERSHEY_PLAIN, 1, [255, 255, 255], 2)
+
+    return source_image, get_graph_image(G)
 
 
 def get_image_in_base64(image_ndarray):
     retval, buffer = cv2.imencode('.jpg', image_ndarray)
     base64_image = base64.b64encode(buffer).decode('utf-8')
     return base64_image
+
+
+def get_graph_image(G):
+    node_labels = nx.get_node_attributes(G, 'label')
+    matched_nodes = [x for x, y in G.nodes(data=True) if y['is_matched'] == True]
+    fig = plt.figure(figsize=(6.4, 4.8))
+    canvas = FigureCanvasAgg(fig)
+    nx.draw_networkx(G, node_size=1500, nodelist=matched_nodes, labels=node_labels, node_color='yellow', font_color='black', font_size=18)
+    fig.canvas.draw()
+    plt.axis('off')
+    plt.tight_layout()
+    # plt.savefig("Graph.png", format="PNG")
+    image_ndarray_from_plot = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8, sep='')
+    width, height = fig.canvas.get_width_height()
+    image_ndarray_from_plot = image_ndarray_from_plot.reshape((height, width, 3))
+    # cv2.imshow('Test', image_ndarray_from_plot)
+    # cv2.waitKey(1)
+    return image_ndarray_from_plot

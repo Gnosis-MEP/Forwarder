@@ -16,12 +16,12 @@ flake8 = "*"
 [packages]
 walrus = "==0.7.1"
 python-decouple = "==3.1"
-event-service-utils = "==1.2.5"
+event-service-utils = "==1.2.6"
 opencv-python = "==4.0.0.21"
 pillow = "==5.4.1"
 numpy = "==1.16.4"
 networkx = "==2.2"
-matplotlib = "*"
+matplotlib = "==2.2.3"
 forwarder = {path = ".",editable = true}
 
 [requires]

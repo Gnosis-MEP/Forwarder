@@ -28,8 +28,8 @@ def get_event_data_image_ndarray(event_data, fs_client):
     nd_shape = (int(height), int(width), n_channels)
     image_nd_array = fs_client.get_image_ndarray_by_key_and_shape(img_key, nd_shape)
 
+    fs_client.delete_image_ndarray_by_key(img_key)
     return image_nd_array
-
 
 def draw_bboxes_and_graph(source_image, G, offset):
     for node in G.nodes():
@@ -64,9 +64,9 @@ def get_graph_image(G):
     fig = plt.figure(figsize=(6.4, 4.8)) # default DPI is 100
     canvas = FigureCanvasAgg(fig)
     nx.draw_networkx(G, node_size=1500, nodelist=matched_nodes, labels=node_labels, node_color='yellow', font_color='black', font_size=18)
-    fig.canvas.draw()
     plt.axis('off')
     plt.tight_layout()
+    fig.canvas.draw()
     # plt.savefig("Graph.png", format="PNG")
     image_ndarray_from_plot = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8, sep='')
     width, height = fig.canvas.get_width_height()

@@ -1,6 +1,6 @@
 import base64
-import matplotlib
-matplotlib.use('Agg')
+# import matplotlib
+# matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import cv2
 import numpy as np

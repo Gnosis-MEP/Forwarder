@@ -51,7 +51,7 @@ def draw_bboxes_and_graph(source_image, G, offset):
             cv2.circle(source_image, centre_point, 2, color, 3)
             cv2.putText(source_image, label, (x1, y1 + t_size[1] + 4), cv2.FONT_HERSHEY_PLAIN, 1, [255, 255, 255], 2)
 
-    return source_image, get_graph_image(G)
+    return source_image, source_image
 
 
 def get_image_in_base64(image_ndarray):

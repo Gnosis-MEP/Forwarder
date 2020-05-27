@@ -11,6 +11,7 @@ from forwarder.conf import (
     LOGGING_LEVEL,
     TRACER_REPORTING_HOST,
     TRACER_REPORTING_PORT,
+    CREATE_IMAGE_AND_GRAPH_FLAG,
 )
 
 
@@ -34,7 +35,8 @@ def run_service():
         stream_factory=stream_factory,
         logging_level=LOGGING_LEVEL,
         tracer_configs=tracer_configs,
-        file_storage_cli=file_storage_cli
+        file_storage_cli=file_storage_cli,
+        create_image_and_graph_flag=CREATE_IMAGE_AND_GRAPH_FLAG
     )
 
     service.run()

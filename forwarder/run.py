@@ -11,7 +11,7 @@ from forwarder.conf import (
     LOGGING_LEVEL,
     TRACER_REPORTING_HOST,
     TRACER_REPORTING_PORT,
-    FORWARDER_CREATE_IMAGE_AND_GRAPH_FLAG,
+    ENABLED_ANNOTATION_ENCODING,
 )
 
 
@@ -36,7 +36,7 @@ def run_service():
         logging_level=LOGGING_LEVEL,
         tracer_configs=tracer_configs,
         file_storage_cli=file_storage_cli,
-        create_image_and_graph_flag=FORWARDER_CREATE_IMAGE_AND_GRAPH_FLAG
+        enabled_annotation_encoding=ENABLED_ANNOTATION_ENCODING
     )
 
     service.run()

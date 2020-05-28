@@ -37,10 +37,8 @@ def send_action_msgs(service_cmd):
         }
     )
 
-    print(f'Sending msg {msg_1}')
-    service_cmd.write_events(msg_1)
-    print(f'Sending msg {msg_2}')
-    service_cmd.write_events(msg_2)
+    print(f'Sending msg {msg_3}')
+    service_cmd.write_events(msg_3)
 
 
 def send_data_msg(service_stream):
@@ -52,16 +50,38 @@ def send_data_msg(service_stream):
             }
         )
     }
-    print(f'Sending msg {data_msg}')
+
+    data_msg3 = {
+        'event': json.dumps(
+            {
+                'id': str(uuid.uuid4()),
+                'some': 'data'
+            }
+        )
+    }
+
+    print(f'Sending msg {data_msg3}')
     service_stream.write_events(data_msg)
+
+import json
+import base64
+
+def convert():
+    data = {}
+    with open('/home/dhasal/Pictures/test.png', mode='rb') as file:
+        img = file.read()
+    return base64.encodebytes(img).decode("utf-8")
+    # data['img'] = base64.encodebytes(img).decode("utf-8")
+    # print(json.dumps(data))
 
 
 def main():
+    convert()
     stream_factory = RedisStreamFactory(host=REDIS_ADDRESS, port=REDIS_PORT)
-    service_cmd = stream_factory.create(SERVICE_CMD_KEY, stype='streamOnly')
-    service_stream = stream_factory.create(SERVICE_STREAM_KEY, stype='streamOnly')
+    # service_cmd = stream_factory.create(SERVICE_CMD_KEY, stype='streamOnly')
+    service_stream = stream_factory.create('ui-data', stype='streamOnly')
     import ipdb; ipdb.set_trace()
-    send_action_msgs(service_cmd)
+    # send_action_msgs(service_cmd)
     send_data_msg(service_stream)
 
 

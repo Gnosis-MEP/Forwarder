@@ -13,7 +13,7 @@ class Forwarder(BaseTracerService):
                  logging_level,
                  tracer_configs,
                  file_storage_cli,
-                 create_image_and_graph_flag):
+                 enabled_annotation_encoding):
 
         tracer = init_tracer(self.__class__.__name__, **tracer_configs)
         super(Forwarder, self).__init__(
@@ -27,7 +27,7 @@ class Forwarder(BaseTracerService):
         self.fs_client = file_storage_cli
         self.cmd_validation_fields = ['id', 'action']
         self.data_validation_fields = ['id']
-        self.create_image_and_graph_flag = create_image_and_graph_flag
+        self.enabled_annotation_encoding = enabled_annotation_encoding
         self.query_id_to_subscriber_id_map = {}
 
     def get_destination_streams(self, destination):
@@ -57,7 +57,7 @@ class Forwarder(BaseTracerService):
         if not super(Forwarder, self).process_data_event(event_data, json_msg):
             return False
 
-        if int(self.create_image_and_graph_flag):
+        if int(self.enabled_annotation_encoding):
             image_ndarray = img_util.get_event_data_image_ndarray(event_data, self.fs_client)
             vekg_graph = load_graph_from_tuples_dict(event_data['vekg'])
             output_image_ndarray, graph_image_ndarray = img_util.draw_bboxes_and_graph(source_image = image_ndarray, G = vekg_graph, offset = (0, 0))

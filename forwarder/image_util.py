@@ -46,7 +46,7 @@ def get_event_data_image_ndarray(event_data, fs_client):
     return image_nd_array
 
 
-def draw_bboxes_and_graph(source_image, G, offset, operators, counter=0):
+def draw_bboxes_and_graph(source_image, G, offset, operators):
 
     for node in G.nodes():
         if G.node[node]['is_matched'] is True:

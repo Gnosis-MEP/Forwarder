@@ -29,6 +29,7 @@ class Forwarder(BaseTracerService):
         self.data_validation_fields = ['id']
         self.enabled_annotation_encoding = enabled_annotation_encoding
         self.query_id_to_subscriber_id_map = {}
+        self.counter = 0
 
     def get_destination_streams(self, destination):
         return self.stream_factory.create(destination, stype='streamOnly')
@@ -60,7 +61,9 @@ class Forwarder(BaseTracerService):
         if int(self.enabled_annotation_encoding):
             image_ndarray = img_util.get_event_data_image_ndarray(event_data, self.fs_client)
             vekg_graph = load_graph_from_tuples_dict(event_data['vekg'])
-            output_image_ndarray, graph_image_ndarray = img_util.draw_bboxes_and_graph(source_image = image_ndarray, G = vekg_graph, offset = (0, 0))
+            operators = event_data['vekg']['operators'] if 'operators' in event_data['vekg'] else list()
+            output_image_ndarray, graph_image_ndarray = img_util.draw_bboxes_and_graph(source_image = image_ndarray, G = vekg_graph, offset = (0, 0), operators=operators, counter=self.counter)
+            self.counter += 1
             event_data['output_image'] = img_util.get_image_in_base64(output_image_ndarray)
             event_data['output_graph'] = img_util.get_image_in_base64(graph_image_ndarray)
 

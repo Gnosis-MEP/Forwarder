@@ -11,7 +11,6 @@ from forwarder.conf import (
     LOGGING_LEVEL,
     TRACER_REPORTING_HOST,
     TRACER_REPORTING_PORT,
-    ENABLED_ANNOTATION_ENCODING,
 )
 
 
@@ -35,8 +34,7 @@ def run_service():
         stream_factory=stream_factory,
         logging_level=LOGGING_LEVEL,
         tracer_configs=tracer_configs,
-        file_storage_cli=file_storage_cli,
-        enabled_annotation_encoding=ENABLED_ANNOTATION_ENCODING
+        file_storage_cli=file_storage_cli
     )
 
     service.run()

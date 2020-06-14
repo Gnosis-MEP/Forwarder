@@ -14,7 +14,7 @@ Build Image:
     mkdir -p /kaniko/.docker
     echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
     echo "Building with dest: ${CI_REGISTRY_IMAGE}:${CI_COMMIT_REF_NAME}"
-    /kaniko/executor --context $CI_PROJECT_DIR --skip-tls-verify --dockerfile $CI_PROJECT_DIR/Dockerfile --destination $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME --cache=true
+    /kaniko/executor --context $CI_PROJECT_DIR --skip-tls-verify --dockerfile $CI_PROJECT_DIR/Dockerfile --destination $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
   except:
     - tags
 
@@ -36,6 +36,7 @@ Send to benchmark:
     - "curl -H \"PRIVATE-TOKEN: $SIT_TOKEN\" \"https://gitlab.insight-centre.org/api/v4/projects/2180/repository/files/test_benchmark.py/raw?ref=master\" -o test_benchmark.py"
     - cat test_benchmark.py
     - python test_benchmark.py ${BENCHMARK_PLATFORM_CONTROLLER_URL} forwarder $CI_REGISTRY_IMAGE $CI_COMMIT_REF_NAME
+  when: manual
   allow_failure: false
 
 Tag Latest:

@@ -17,7 +17,6 @@ class TestForwarder(MockedServiceStreamTestCase):
         'service_cmd_key': SERVICE_CMD_KEY,
         'logging_level': 'ERROR',
         'tracer_configs': {'reporting_host': None, 'reporting_port': None},
-        'file_storage_cli' : {}
     }
     SERVICE_CLS = Forwarder
     MOCKED_STREAMS_DICT = {
@@ -86,10 +85,9 @@ class TestForwarder(MockedServiceStreamTestCase):
     def test_forward_to_query_ids_stream_should_send_events_to_all_stream(self):
         event_data = {
             'id': '1',
-            'query_ids': ['query-id1', 'query-id2']
+            'query_id': 'query-id1',
+            'vekg_stream': [{'event': 1}, {'event': 2}]
         }
         self.stream_factory.mocked_dict['query-id1'] = []
-        self.stream_factory.mocked_dict['query-id2'] = []
         self.service.forward_to_query_ids_stream(event_data)
-        self.assertEqual(len(self.stream_factory.mocked_dict['query-id1']), 1)
-        self.assertEqual(len(self.stream_factory.mocked_dict['query-id2']), 1)
+        self.assertEqual(len(self.stream_factory.mocked_dict['query-id1']), 2)

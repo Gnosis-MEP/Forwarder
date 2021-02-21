@@ -1,4 +1,6 @@
+import functools
 import threading
+
 from event_service_utils.logging.decorators import timer_logger
 from event_service_utils.services.tracer import BaseTracerService
 from event_service_utils.tracing.jaeger import init_tracer
@@ -9,8 +11,7 @@ class Forwarder(BaseTracerService):
                  service_stream_key, service_cmd_key,
                  stream_factory,
                  logging_level,
-                 tracer_configs,
-                 file_storage_cli):
+                 tracer_configs):
 
         tracer = init_tracer(self.__class__.__name__, **tracer_configs)
         super(Forwarder, self).__init__(
@@ -21,7 +22,6 @@ class Forwarder(BaseTracerService):
             logging_level=logging_level,
             tracer=tracer,
         )
-        self.fs_client = file_storage_cli
         self.cmd_validation_fields = ['id', 'action']
         self.data_validation_fields = ['id']
         self.query_id_to_subscriber_id_map = {}
@@ -30,9 +30,9 @@ class Forwarder(BaseTracerService):
         return self.stream_factory.create(destination, stype='streamOnly')
 
     def forward_to_query_ids_stream(self, event_data):
-        query_ids = event_data.get('query_ids', [])
+        query_id = event_data.get('query_id')
         self.logger.debug('Sending {event_data} to {query_ids} streams')
-        for query_id in query_ids:
+        for event in event_data['vekg_stream']:
             self.write_event_with_trace(event_data, self.get_destination_streams(query_id))
 
     def forward_to_final_stream(self, event_data):
@@ -48,11 +48,6 @@ class Forwarder(BaseTracerService):
     def process_data_event(self, event_data, json_msg):
         if not super(Forwarder, self).process_data_event(event_data, json_msg):
             return False
-
-        # [Terminal service] remove image from cache to save disk space
-        # img_key = event_data['image_url']
-        # self.fs_client.delete_image_ndarray_by_key(img_key)
-
         self.forward_to_final_stream(event_data)
 
     def process_action(self, action, event_data, json_msg):

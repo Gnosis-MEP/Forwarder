@@ -2,13 +2,14 @@ import functools
 import threading
 
 from event_service_utils.logging.decorators import timer_logger
-from event_service_utils.services.tracer import BaseTracerService
+from event_service_utils.services.event_driven import BaseEventDrivenCMDService
 from event_service_utils.tracing.jaeger import init_tracer
 
 
-class Forwarder(BaseTracerService):
+class Forwarder(BaseEventDrivenCMDService):
     def __init__(self,
-                 service_stream_key, service_cmd_key,
+                 service_stream_key, service_cmd_key_list,
+                 pub_event_list, service_details,
                  stream_factory,
                  logging_level,
                  tracer_configs):
@@ -17,12 +18,14 @@ class Forwarder(BaseTracerService):
         super(Forwarder, self).__init__(
             name=self.__class__.__name__,
             service_stream_key=service_stream_key,
-            service_cmd_key=service_cmd_key,
+            service_cmd_key_list=service_cmd_key_list,
+            pub_event_list=pub_event_list,
+            service_details=service_details,
             stream_factory=stream_factory,
             logging_level=logging_level,
             tracer=tracer,
         )
-        self.cmd_validation_fields = ['id', 'action']
+        self.cmd_validation_fields = ['id']
         self.data_validation_fields = ['id']
         self.query_id_to_subscriber_id_map = {}
 
@@ -50,14 +53,14 @@ class Forwarder(BaseTracerService):
             return False
         self.forward_to_final_stream(event_data)
 
-    def process_action(self, action, event_data, json_msg):
-        if not super(Forwarder, self).process_action(action, event_data, json_msg):
+    def process_event_type(self, event_type, event_data, json_msg):
+        if not super(Forwarder, self).process_event_type(event_type, event_data, json_msg):
             return False
-        if action == 'addQuery':
+        if event_type == 'QueryCreated':
             subscriber_id = event_data['subscriber_id']
             query_id = event_data['query_id']
             self.add_query(subscriber_id, query_id)
-        elif action == 'delQuery':
+        elif event_type == 'QueryRemoved':
             query_id = event_data['query_id']
             self.del_query(query_id)
 

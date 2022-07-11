@@ -1,14 +1,15 @@
 stages:
   - build
   - test
-  # - multiarch
   - benchmark
   - tag-latest
+  # - multiarch
 
 variables:
   SERVICE_STREAM_KEY: ias-data
   LISTEN_EVENT_TYPE_QUERY_CREATED: QueryCreated
   LISTEN_EVENT_TYPE_QUERY_REMOVED: QueryRemoved
+  BENCHMARK_TEMPLATE_NAME: default
   LOGGING_LEVEL: DEBUG
   DOCKER_HOST: tcp://docker:2375/
   DOCKER_DRIVER: overlay2
@@ -30,6 +31,39 @@ Build Image:
     - tags
 
 
+test:
+  stage: test
+  image: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
+  script:
+  - cd $CI_PROJECT_DIR
+  - pip install -e .
+  - python --version
+  - pipenv --version
+  - ./run_tests.sh
+
+Send to benchmark:
+  stage: benchmark
+  image: python:3.6
+  script:
+    - "curl -H \"PRIVATE-TOKEN: $SIT_TOKEN\" \"https://gitlab.insight-centre.org/api/v4/projects/2180/repository/files/test_benchmark_from_template.py/raw?ref=master\" -o test_benchmark_from_template.py"
+    - python test_benchmark_from_template.py ${BENCHMARK_PLATFORM_CONTROLLER_URL} ${BENCHMARK_TEMPLATE_NAME} forwarder $CI_REGISTRY_IMAGE $CI_COMMIT_REF_NAME
+  when: manual
+  allow_failure: false
+
+Tag Latest:
+  stage: tag-latest
+  image: jonoh/docker-buildx-qemu
+
+  services:
+    - docker:19.03.0-dind
+  before_script:
+    - docker info
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+  script:
+    - docker pull "$CI_REGISTRY_IMAGE:${CI_COMMIT_REF_NAME}"
+    - docker tag "$CI_REGISTRY_IMAGE:${CI_COMMIT_REF_NAME}" $CI_REGISTRY_IMAGE:latest
+    - docker push "$CI_REGISTRY_IMAGE:latest"
+
 # build multiarch:
 #   stage: multiarch
 #   image: jonoh/docker-buildx-qemu
@@ -47,38 +81,3 @@ Build Image:
 #   when: manual
 #   tags:
 #     - multiarch
-
-test:
-  stage: test
-  image: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
-  script:
-  - cd $CI_PROJECT_DIR
-  - pip install -e .
-  - python --version
-  - pipenv --version
-  - ./run_tests.sh
-
-
-Sent to benchmark:
-  stage: benchmark
-  image: python:3.6
-  script:
-    - "curl -H \"PRIVATE-TOKEN: $SIT_TOKEN\" \"https://gitlab.insight-centre.org/api/v4/projects/2180/repository/files/test_benchmark.py/raw?ref=master\" -o test_benchmark.py"
-    - cat test_benchmark.py
-    - python test_benchmark.py ${BENCHMARK_PLATFORM_CONTROLLER_URL} forwarder $CI_REGISTRY_IMAGE $CI_COMMIT_REF_NAME
-  when: manual
-  allow_failure: false
-
-Tag Latest:
-  stage: tag-latest
-  image: jonoh/docker-buildx-qemu
-
-  services:
-    - docker:19.03.0-dind
-  before_script:
-    - docker info
-    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
-  script:
-    - docker pull "$CI_REGISTRY_IMAGE:${CI_COMMIT_REF_NAME}"
-    - docker tag "$CI_REGISTRY_IMAGE:${CI_COMMIT_REF_NAME}" $CI_REGISTRY_IMAGE:latest
-    - docker push "$CI_REGISTRY_IMAGE:latest"

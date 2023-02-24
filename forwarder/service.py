@@ -35,8 +35,8 @@ class Forwarder(BaseEventDrivenCMDService):
     def forward_to_query_ids_stream(self, event_data):
         query_id = event_data.get('query_id')
         self.logger.debug('Sending {event_data} to {query_ids} streams')
-        for event in event_data['vekg_stream']:
-            self.write_event_with_trace(event_data, self.get_destination_streams(query_id))
+        # for event in event_data['vekg_stream']:
+        self.write_event_with_trace(event_data, self.get_destination_streams(query_id))
 
     def forward_to_final_stream(self, event_data):
         self.forward_to_query_ids_stream(event_data)

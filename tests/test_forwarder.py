@@ -118,4 +118,4 @@ class TestForwarder(MockedEventDrivenServiceStreamTestCase):
         }
         self.stream_factory.mocked_dict['query-id1'] = []
         self.service.forward_to_query_ids_stream(event_data)
-        self.assertEqual(len(self.stream_factory.mocked_dict['query-id1']), 2)
+        self.assertEqual(len(self.stream_factory.mocked_dict['query-id1']), 1)

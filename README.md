@@ -5,6 +5,7 @@ Service responsible for sending the notification of matched events to the subscr
 # Events Listened
  - [QUERY_CREATED](https://github.com/Gnosis-MEP/Gnosis-Docs/blob/main/EventTypes.md#QUERY_CREATED)
  - [QUERY_REMOVED](https://github.com/Gnosis-MEP/Gnosis-Docs/blob/main/EventTypes.md#QUERY_REMOVED)
+ - [VEKG_STREAM](https://github.com/Gnosis-MEP/Gnosis-Docs/blob/main/EventTypes.md#VEKG_STREAM)
 
 # Events Published
  - [VEKG_STREAM](https://github.com/Gnosis-MEP/Gnosis-Docs/blob/main/EventTypes.md#VEKG_STREAM)
